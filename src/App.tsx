@@ -8,6 +8,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
+import PatientManagement from './components/PatientManagement';
+import IncidentManagement from './components/IncidentManagement';
+import CalendarView from './components/CalendarView';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient();
@@ -30,19 +33,19 @@ const AppRoutes = () => {
         
         <Route path="/patients" element={
           <ProtectedRoute requiredRole="Admin">
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Patient Management</h2>
-              <p className="text-gray-600">Coming soon - comprehensive patient management system</p>
-            </div>
+            <PatientManagement />
           </ProtectedRoute>
         } />
         
         <Route path="/appointments" element={
           <ProtectedRoute requiredRole="Admin">
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Appointment Management</h2>
-              <p className="text-gray-600">Coming soon - full appointment scheduling and management</p>
-            </div>
+            <IncidentManagement />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/calendar" element={
+          <ProtectedRoute requiredRole="Admin">
+            <CalendarView />
           </ProtectedRoute>
         } />
         

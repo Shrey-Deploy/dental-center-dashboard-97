@@ -19,6 +19,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/patients', label: 'Patients', icon: Users },
     { path: '/appointments', label: 'Appointments', icon: Calendar },
+    { path: '/calendar', label: 'Calendar', icon: Calendar },
   ] : [
     { path: '/', label: 'My Dashboard', icon: Home },
     { path: '/my-appointments', label: 'My Appointments', icon: Calendar },
@@ -83,14 +84,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Mobile Navigation */}
       <nav className="md:hidden bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-4 py-3">
+          <div className="flex space-x-4 py-3 overflow-x-auto">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               return (
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                     location.pathname === item.path
                       ? 'text-blue-600 bg-blue-50'
                       : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
