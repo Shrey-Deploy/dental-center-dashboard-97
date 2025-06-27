@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
-import { Plus, Edit, Trash, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash, Calendar, Upload, FileText, Image, Download, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface IncidentFormData {
@@ -31,6 +31,7 @@ const IncidentManagement: React.FC = () => {
   const [editingIncident, setEditingIncident] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<string>('all');
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, url: string, type: string}>>([]);
 
   const form = useForm<IncidentFormData>({
     defaultValues: {
@@ -50,11 +51,43 @@ const IncidentManagement: React.FC = () => {
     ? incidents 
     : incidents.filter(incident => incident.patientId === selectedPatient);
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        const newFile = {
+          name: file.name,
+          url: result,
+          type: file.type
+        };
+        setUploadedFiles(prev => [...prev, newFile]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const downloadFile = (file: {name: string, url: string, type: string}) => {
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const onSubmit = (data: IncidentFormData) => {
     const incidentData = {
       ...data,
       cost: data.cost ? Number(data.cost) : undefined,
-      files: editingIncident?.files || []
+      files: uploadedFiles
     };
 
     if (editingIncident) {
@@ -74,10 +107,12 @@ const IncidentManagement: React.FC = () => {
     form.reset();
     setEditingIncident(null);
     setIsDialogOpen(false);
+    setUploadedFiles([]);
   };
 
   const handleEdit = (incident: any) => {
     setEditingIncident(incident);
+    setUploadedFiles(incident.files || []);
     form.reset({
       patientId: incident.patientId,
       title: incident.title,
@@ -105,6 +140,7 @@ const IncidentManagement: React.FC = () => {
 
   const handleAddNew = () => {
     setEditingIncident(null);
+    setUploadedFiles([]);
     form.reset();
     setIsDialogOpen(true);
   };
@@ -122,6 +158,11 @@ const IncidentManagement: React.FC = () => {
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Image className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" />;
   };
 
   return (
@@ -306,6 +347,59 @@ const IncidentManagement: React.FC = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* File Upload Section */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Upload Files</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx"
+                        onChange={handleFileUpload}
+                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <Upload className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Upload invoices, X-rays, treatment photos, etc.</p>
+                  </div>
+
+                  {/* Uploaded Files Preview */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">Uploaded Files</label>
+                      <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                        {uploadedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                            <div className="flex items-center gap-2">
+                              {getFileIcon(file.type)}
+                              <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadFile(file)}
+                              >
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeFile(index)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -362,7 +456,7 @@ const IncidentManagement: React.FC = () => {
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Cost</TableHead>
-                  <TableHead>Treatment</TableHead>
+                  <TableHead>Files</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -383,7 +477,31 @@ const IncidentManagement: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{incident.cost ? `$${incident.cost}` : 'N/A'}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{incident.treatment || 'N/A'}</TableCell>
+                      <TableCell>
+                        {incident.files && incident.files.length > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">{incident.files.length} file(s)</span>
+                            <div className="flex gap-1">
+                              {incident.files.slice(0, 2).map((file, index) => (
+                                <Button
+                                  key={index}
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => downloadFile(file)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  {getFileIcon(file.type)}
+                                </Button>
+                              ))}
+                              {incident.files.length > 2 && (
+                                <span className="text-xs text-gray-500">+{incident.files.length - 2}</span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          'No files'
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button
